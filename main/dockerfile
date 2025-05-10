@@ -1,0 +1,35 @@
+# Use an official Python runtime as a parent image
+FROM python:3.12-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the application code
+COPY app.py .
+
+# Create data directory explicitly
+RUN mkdir -p /app/data
+
+# Copy data files specifically with verbose output for debugging
+COPY data/ /app/data/
+
+# Add verification commands to debug
+RUN echo "=== Directory Structure ===" && \
+    ls -la /app && \
+    echo "=== Data Directory ===" && \
+    ls -la /app/data && \
+    echo "=== File Content if exists ===" && \
+    (test -f /app/data/stock_data.csv && head /app/data/stock_data.csv || echo "File not found")
+
+# Expose the port the app runs on
+EXPOSE 8000
+
+# Define environment variables
+ENV PYTHONUNBUFFERED=1
+
+# Run FastAPI using Uvicorn
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
